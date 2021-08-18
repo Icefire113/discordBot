@@ -1,6 +1,5 @@
 require('dotenv').config()
 const sqlite = require("sqlite3")
-const fs = require('fs')
 const Discord = require("discord.js")
 
 
@@ -10,18 +9,17 @@ const db = new sqlite.Database(process.env.DBLOCALPATH, (err) => {
     console.log(`[DB] Local database ${process.env.DBLOCALPATH} connected`)
 })
 const settings = require('./settings.json')
-const {
-    logout
-} = require('./src/functions')
 
 /* 
 format:
 [{
     guildid: -1,
-    reactroles: [{
-        roleid: -1,
-        emoji: ""
-    }]
+    reactroles: [
+            {
+            roleid: -1,
+            emoji: ""
+        }
+    ]
 }]
 */
 let temp
@@ -68,7 +66,8 @@ bot.on('message', (message) => {
                             if (err) return console.error(`[DB] Error closing database error message is: ${err.message}`)
                             console.log(`[DB] Connection to local database closed`)
                         })
-                        logout(bot)
+                        bot.destroy()
+                        console.log(`[BOT] Logged out`)
                     }
                     break;
 
@@ -87,6 +86,7 @@ bot.on('message', (message) => {
                             if (err) return console.error(`[DB] ${err.message}`)
                         }).run().finalize()
 
+                        // roleids is json and must be parsed
                         db.prepare(`create table if not exists \"reactroles\" (
                             \"id\"	INTEGER NOT NULL,
                             \"guildid\"	INTEGER NOT NULL UNIQUE,

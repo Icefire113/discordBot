@@ -22,7 +22,7 @@ format:
     ]
 }]
 */
-let temp
+let reactrolesdatacache = []
 
 
 bot.on('ready', () => {
@@ -108,11 +108,32 @@ bot.on('message', (message) => {
                         return message.reply("You mentioned to many roles, please use format: <@role> <emoji>")
                     }
                     message.mentions.roles.toJSON().forEach((e, i) => {
+                        // check if there is a cache already existing
+                        if (!reactrolesdatacache.find(({
+                                guildid
+                            }) => guildid == e.guild)) {
 
+                            // add a new record to cache if there isnt one already
+                            reactrolesdatacache.push({
+                                guildid: e.guild,
+                                reactroles: [{
+                                    roleid: e.id,
+                                    emoji: args[2]
+                                }]
+                            })
+                        } else {
+                            // add to the cache data cause one already exists
+                            let index = reactrolesdatacache.findIndex(({
+                                guildid
+                            }) => guildid == e.guild)
+                            reactrolesdatacache[index].reactroles.push({
+                                roleid: e.id,
+                                emoji: args[2]
+                            })
+
+                        }
                     })
 
-                    // console.log(message.content)
-                    // message.react(args[2])
 
 
 
@@ -121,16 +142,32 @@ bot.on('message', (message) => {
                 case 'finalize':
                     db.get("select * from reactchannelid where guildid = " + message.guild.id, (err, row) => {
                         if (err) return console.error(`[DB] ${err.message}`)
+                        let index = reactrolesdatacache.findIndex(({
+                            guildid
+                        }) => guildid == message.guild.id)
 
                         if (row == undefined) {
-                            // there isnt a thing in the db
-                            message.reply(`This server dosent have a react role channel setup please use ${settings.prefix}setreactchannel to set one up`)
+                            // server dosent have a react role set up
+                            return message.reply(`This server dosent have a react role channel setup please use ${settings.prefix}setreactchannel to set one up`)
                         } else {
-                            // theres a record in the db
+                            // server already has a react role setup
+                            db.prepare(`insert into reactroles values (null, ?, ?)`, (err) => {
+                                if (err) {
+                                    message.reply('Error adding roles to database')
+                                    return console.error(`[DB] ${err.message}`)
+                                }
+
+                            }).run([message.guild.id, JSON.stringify(reactrolesdatacache[index].reactroles)]).finalize()
+                            // clear data from cache
+                            reactrolesdatacache.splice(index, 1)
+
+                            // add react roles to channel with reactions
 
                         }
 
                     })
+
+
 
                     break;
             }

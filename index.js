@@ -29,14 +29,6 @@ bot.on('ready', () => {
     console.log(`[BOT] Logged in as ${bot.user.tag}`)
 })
 
-/*
-create table if not exists \"reactroles\" (
-	\"id\"	INTEGER NOT NULL,
-	\"guildid\"	INTEGER NOT NULL UNIQUE,
-	\"roleids\"	TEXT NOT NULL,
-	PRIMARY KEY(\"id\" AUTOINCREMENT)
-) 
-*/
 bot.on('message', (message) => {
     let args = message.content.replace(settings.prefix, "").split(" ")
     if (message.author.id != bot.user.id) {
@@ -77,6 +69,9 @@ bot.on('message', (message) => {
                         db.prepare("drop table if exists reactchannelid", (err) => {
                             if (err) return console.error(`[DB] ${err.message}`)
                         }).run().finalize()
+                        db.prepare("drop table if exists reactroles", (err) => {
+                            if (err) return console.error(`[DB] ${err.message}`)
+                        }).run().finalize()
 
                         db.prepare(`create table if not exists \"reactchannelid\" 
                                 (\"id\" INTEGER NOT NULL,
@@ -89,7 +84,7 @@ bot.on('message', (message) => {
                         // roleids is json and must be parsed
                         db.prepare(`create table if not exists \"reactroles\" (
                             \"id\"	INTEGER NOT NULL,
-                            \"guildid\"	INTEGER NOT NULL UNIQUE,
+                            \"guildid\"	TEXT NOT NULL UNIQUE,
                             \"roleids\"	TEXT NOT NULL,
                             PRIMARY KEY(\"id\" AUTOINCREMENT)
                         )`, (err) => {
@@ -158,7 +153,6 @@ bot.on('message', (message) => {
                             return message.reply(`This server dosent have a react role channel setup please use ${settings.prefix}setreactchannel to set one up`)
                         } else {
                             // server already has a react role setup
-
                             // check if server already has data in the db
                             db.get(`select * from reactroles where guildid = ${message.guild.id}`, (err, row) => {
                                 if (err) return console.error(`[DB] ${err.message}`)
@@ -181,8 +175,16 @@ bot.on('message', (message) => {
 
                                 } else {
                                     // server already has a record in the database
-                                    let tempdata = JSON.parse(row.roleids).push(reactrolesdatacache[index].reactroles)
-                                    console.log(tempdata)
+                                    let tempdata = JSON.parse(row.roleids).concat(reactrolesdatacache[index].reactroles)
+
+                                    // db.prepare(`replace into reactroles values (null, ?, ?)`, (err) => {
+                                    //     if (err) {
+                                    //         message.reply('Error adding roles to database')
+                                    //         return console.error(`[DB] ${err.message}`)
+                                    //     }
+                                    // }).run([message.guild.id, JSON.stringify(tempdata)]).finalize()
+
+
 
                                     // clear data from cache
                                     reactrolesdatacache.splice(index, 1)

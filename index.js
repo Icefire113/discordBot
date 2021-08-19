@@ -45,7 +45,7 @@ bot.on('message', (message) => {
             switch (args[0]) {
                 case 'setreactchannel':
                     // See if server already has a react channel
-                    db.get("select * from reactchannelid where guildid = " + message.guild.id, (err, row) => {
+                    db.get(`select * from reactchannelid where guildid = ${message.guild.id}`, (err, row) => {
                         if (err) return console.error(`[DB] ${err.message}`)
                         if (row != undefined) {
                             bot.channels.fetch(row.channelid).then(channel => message.reply(`There is already a react channel for this server <#${channel.id}>`))
@@ -139,29 +139,57 @@ bot.on('message', (message) => {
 
 
                     break;
+
+
                 case 'finalize':
-                    db.get("select * from reactchannelid where guildid = " + message.guild.id, (err, row) => {
+                    let index = reactrolesdatacache.findIndex(({
+                        guildid
+                    }) => guildid == message.guild.id)
+                    if (!reactrolesdatacache[index]) {
+                        return message.reply(`You havent added roles to finalize use ${settings.prefix}addrole <@role> <emoji> to add them`)
+                    }
+
+
+                    db.get(`select * from reactchannelid where guildid = ${message.guild.id}`, (err, row) => {
                         if (err) return console.error(`[DB] ${err.message}`)
-                        let index = reactrolesdatacache.findIndex(({
-                            guildid
-                        }) => guildid == message.guild.id)
 
                         if (row == undefined) {
                             // server dosent have a react role set up
                             return message.reply(`This server dosent have a react role channel setup please use ${settings.prefix}setreactchannel to set one up`)
                         } else {
                             // server already has a react role setup
-                            db.prepare(`insert into reactroles values (null, ?, ?)`, (err) => {
-                                if (err) {
-                                    message.reply('Error adding roles to database')
-                                    return console.error(`[DB] ${err.message}`)
+
+                            // check if server already has data in the db
+                            db.get(`select * from reactroles where guildid = ${message.guild.id}`, (err, row) => {
+                                if (err) return console.error(`[DB] ${err.message}`)
+
+                                if (row == undefined) {
+                                    // server dosent have a record already in the database
+                                    db.prepare(`insert into reactroles values (null, ?, ?)`, (err) => {
+                                        if (err) {
+                                            message.reply('Error adding roles to database')
+                                            return console.error(`[DB] ${err.message}`)
+                                        }
+
+                                    }).run([message.guild.id, JSON.stringify(reactrolesdatacache[index].reactroles)]).finalize()
+
+                                    // clear data from cache
+                                    reactrolesdatacache.splice(index, 1)
+
+                                    // add react roles to channel with reactions
+
+
+                                } else {
+                                    // server already has a record in the database
+                                    let tempdata = JSON.parse(row.roleids).push(reactrolesdatacache[index].reactroles)
+                                    console.log(tempdata)
+
+                                    // clear data from cache
+                                    reactrolesdatacache.splice(index, 1)
                                 }
+                            })
 
-                            }).run([message.guild.id, JSON.stringify(reactrolesdatacache[index].reactroles)]).finalize()
-                            // clear data from cache
-                            reactrolesdatacache.splice(index, 1)
 
-                            // add react roles to channel with reactions
 
                         }
 

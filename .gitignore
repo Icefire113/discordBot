@@ -3,3 +3,4 @@ data.db
 .vscode
 node_modules
 yarn.lock
+links.txt

@@ -30,7 +30,7 @@ bot.on('ready', () => {
 })
 
 bot.on('message', (message) => {
-    let args = message.content.replace(settings.prefix, "").split(" ")
+    let args = message.content.replace(settings.prefix, "").toLowerCase().split(" ")
     if (message.author.id != bot.user.id) {
 
         if (message.content.startsWith(settings.prefix)) {
@@ -102,7 +102,7 @@ bot.on('message', (message) => {
                     if (message.mentions.roles.toJSON().length > 1) {
                         return message.reply("You mentioned to many roles, please use format: <@role> <emoji>")
                     }
-                    message.mentions.roles.toJSON().forEach((e, i) => {
+                    message.mentions.roles.toJSON().forEach((e) => {
                         // check if there is a cache already existing
                         if (!reactrolesdatacache.find(({
                                 guildid
@@ -128,11 +128,6 @@ bot.on('message', (message) => {
 
                         }
                     })
-
-
-
-
-
                     break;
 
 
@@ -149,16 +144,16 @@ bot.on('message', (message) => {
                         if (err) return console.error(`[DB] ${err.message}`)
 
                         if (row == undefined) {
-                            // server dosent have a react role set up
+                            // server dosent have a react role channel set up
                             return message.reply(`This server dosent have a react role channel setup please use ${settings.prefix}setreactchannel to set one up`)
                         } else {
-                            // server already has a react role setup
+                            // server already has a react role channel setup
                             // check if server already has data in the db
                             db.get(`select * from reactroles where guildid = ${message.guild.id}`, (err, row) => {
                                 if (err) return console.error(`[DB] ${err.message}`)
 
                                 if (row == undefined) {
-                                    // server dosent have a record already in the database
+                                    // server dosent have a record (data) already in the database
                                     db.prepare(`insert into reactroles values (null, ?, ?)`, (err) => {
                                         if (err) {
                                             message.reply('Error adding roles to database')
@@ -174,20 +169,22 @@ bot.on('message', (message) => {
 
 
                                 } else {
-                                    // server already has a record in the database
-                                    let tempdata = JSON.parse(row.roleids).concat(reactrolesdatacache[index].reactroles)
+                                    message.reply("This feature has not been added yet")
 
-                                    // db.prepare(`replace into reactroles values (null, ?, ?)`, (err) => {
-                                    //     if (err) {
-                                    //         message.reply('Error adding roles to database')
-                                    //         return console.error(`[DB] ${err.message}`)
-                                    //     }
-                                    // }).run([message.guild.id, JSON.stringify(tempdata)]).finalize()
+                                    // // server already has a record (data) in the database
+                                    // let tempdata = JSON.parse(row.roleids).concat(reactrolesdatacache[index].reactroles)
+
+                                    // // db.prepare(`replace into reactroles values (null, ?, ?)`, (err) => {
+                                    // //     if (err) {
+                                    // //         message.reply('Error adding roles to database')
+                                    // //         return console.error(`[DB] ${err.message}`)
+                                    // //     }
+                                    // // }).run([message.guild.id, JSON.stringify(tempdata)]).finalize()
 
 
 
-                                    // clear data from cache
-                                    reactrolesdatacache.splice(index, 1)
+                                    // // clear data from cache
+                                    // reactrolesdatacache.splice(index, 1)
                                 }
                             })
 
